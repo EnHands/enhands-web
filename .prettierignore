@@ -1,0 +1,17 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Dependency folders
+node_modules/
+
+# SvelteKit build & temp files
+.svelte-kit/
+build/
+
+# Miscellaneous
+/static/
+/drizzle/

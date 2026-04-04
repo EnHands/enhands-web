@@ -1,0 +1,25 @@
+# Dependencies (Massive folders that npm install recreates)
+node_modules/
+
+# Secrets & Environment (THE MOST IMPORTANT PART)
+.env
+*.env.*
+!.env.example
+
+# SvelteKit/Vite Build Outputs
+.svelte-kit/
+build/
+dist/
+
+# OS-Specific Junk
+.DS_Store (Mac)
+Thumbs.db (Windows)
+desktop.ini (Windows)
+
+# Local Tooling & Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.vscode/
+.idea/
