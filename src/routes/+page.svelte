@@ -1,3 +1,47 @@
+<script>
+    import { onMount } from 'svelte';
+
+    /** @type {{ data: import('./$types').PageData }} */
+    let {data} = $props();
+
+    // --- HORIZONTAL SCROLL LOGIC ---
+    /** @type {HTMLElement} */
+    let carouselElement; // This will hold the reference to our carousel div
+
+    /** @type {Element[]} */
+    let pages = $state([]); // This will hold our carousel items
+    
+    let activeIndex = $state(0); // This tracks which dot is blue
+
+    onMount(() => {
+        // 1. Grab all the .carousel-item elements inside our carousel
+        const pageElements = carouselElement.querySelectorAll('.carousel-item');
+        pages = Array.from(pageElements);
+
+        // 2. Set up the Intersection Observer
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (!e.isIntersecting) return;
+                // When an item comes into view, update the activeIndex
+                activeIndex = pages.indexOf(e.target);
+            });
+        }, { root: carouselElement, threshold: 0.6 });
+
+        // 3. Start observing each page
+        pages.forEach(p => io.observe(p));
+
+        // 4. CLEANUP: Always disconnect observers when the user leaves the page!
+        return () => io.disconnect();
+    });
+
+    /**
+     * Helper function to scroll to a specific item
+     * @param {number} index - The position of the dot clicked
+     */
+    function scrollToItem(index) {
+        pages[index].scrollIntoView({ behavior: 'smooth', inline: 'center' });
+    }
+</script>
 
 <!--Main-->
 <div class="pt-8 pb-10 sm:pt-20 md:pt-40 sm:px-6 mx-10 flex flex-wrap flex-col md:flex-row items-center">
@@ -133,10 +177,18 @@
             Hand</a>
     </div>
 
-    <!-- ②  Dot bar -->
-    <nav id="dotNav" class="flex justify-center gap-2 pt-2"></nav>
+    <!--  Dot bar -->
+    <nav id="dotNav" class="flex justify-center gap-2 pt-2">
+        {#each pages as _, i}
+            <button 
+                class="h-2 w-2 rounded-full transition-colors {activeIndex === i ? 'bg-blue-600' : 'bg-gray-300'}"
+                aria-label="Scroll to item {i + 1}"
+                onclick={() => scrollToItem(i)}
+            ></button>
+        {/each}
+    </nav>
 
-    <div id="carousel" class="carousel scrollable-div rounded width_overflow ">
+    <div id="carousel" class="carousel scrollable-div rounded width_overflow" bind:this={carouselElement}>
         <!-- Cosmetic prototype -->
         <div id="P3" class="carousel-item px-4 py-6">
             <div class="cardMV rounded-xl">
@@ -428,7 +480,7 @@
                             </div>
                             </button>
                             <div id="ar-prompt">
-                                <img src="https://modelviewer.dev/shared-assets/icons/hand.png">
+                                <img src="https://modelviewer.dev/shared-assets/icons/hand.png" alt="">
                             </div>
                     </model-viewer>
 
@@ -447,7 +499,7 @@
     style="background:url('/images/donate-bg.jpg') center/cover no-repeat">
 
     <!-- soft blue‑to‑transparent overlay -->
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/80 to-blue-700/50"></div>
+    <div class="absolute inset-0 bg-linear-to-r from-blue-900/80 via-blue-800/50 to-blue-700/30"></div>
     <!-- content -->
     <div class="relative max-w-6xl mx-auto px-6 sm:px-8 py-28 lg:py-36 grid lg:grid-cols-2 gap-10">
 
@@ -456,8 +508,7 @@
 
         <!-- right column: copy + CTAs -->
         <div class="bg-gray-800 bg-opacity-80 p-8 rounded-lg backdrop-blur-sm">
-            <h2 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-6
-        text-white drop-shadow-md">
+            <h2 class="text-4xl sm:text-5xl font-extrabold leading-tight mb-6 text-white drop-shadow-md">
                 Give a hand.
                 <span class="block text-blue-500">Change a life.</span>
             </h2>
@@ -478,7 +529,7 @@
             <div class="w-full max-w-full sm:max-w-fit
             bg-gray-900/60 backdrop-blur-sm p-4 rounded-md
             text-xs sm:text-sm leading-relaxed font-mono text-white shadow
-            break-words overflow-x-auto">
+            wrap-break-word overflow-x-auto">
                 <strong>EnHands e.V.</strong><br>
                 IBAN: DE74 8306 5408 0005 4605 90<br>
                 GENODEF1SLR (Deutsche Skatbank)
@@ -492,7 +543,28 @@
     class="max-w-2xl mx-auto py-24 px-4 grid items-center grid-cols-1 gap-y-16 gap-x-8 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8 ">
     <h2 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:tracking-tight sm:text-4xl">Meet
         our Team 👨‍👩‍👧‍👧</h2>
-    <div id="CardList-People" class="flex gap-6 flex-wrap justify-center ">
+    <div id="CardList-People" class="flex gap-6 flex-wrap justify-center">
+    
+        {#each data.members as member}
+            <div class="card w-36 sm:w-60 rounded overflow-hidden shadow-lg">
+                
+                <div class="card-image-area">
+                    {#if member.img_hover}
+                        <img class="img-nohover w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait">
+                        <img class="img-hover w-full max-h-60 object-cover" src={member.img_hover} alt="{member.name} portrait">
+                    
+                    {:else}
+                        <img class="w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait">
+                    {/if}
+                </div>
+                
+                <div class="px-3 sm:px-6 py-4">
+                    <div class="font-bold text-sm sm:text-xl mb-2">{member.name}</div>
+                    <p class="text-gray-700 text-xs sm:text-base">{member.job}</p>
+                </div>
+                
+            </div>
+        {/each}
     </div>
 </div>
 
@@ -502,14 +574,26 @@
         <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Our Partners</h2>
 
         <div class="partners-slideshow relative overflow-hidden py-0">
-            <div class="partners-track flex items-center gap-8" aria-live="polite">
-                <!-- Partners will be loaded here by JavaScript -->
+            <div 
+                class="partners-track flex items-center gap-8 w-max" 
+                style="animation-duration: {data.partners.length * 3}s"
+                aria-live="polite"
+            >
+                {#each [...data.partners, ...data.partners] as partner}
+                    <a 
+                        href={partner.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="partner-logo transition-transform hover:scale-110" 
+                        title={partner.name}
+                    >
+                        <img src={partner.img} alt="{partner.name} logo" loading="lazy" class="h-12 w-auto object-contain" />
+                    </a>
+                {/each}
             </div>
 
-            <!-- Gradient fade effects -->
-            <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
-            <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-gray-50 to-transparent z-10">
-            </div>
+            <div class="absolute inset-y-0 left-0 w-24 bg-linear-to-r from-gray-50 to-transparent z-10 pointer-events-none"></div>
+            <div class="absolute inset-y-0 right-0 w-24 bg-linear-to-l from-gray-50 to-transparent z-10 pointer-events-none"></div>
         </div>
     </div>
 </section>
@@ -827,5 +911,27 @@
 
     a {
         color: #888
+    }
+
+    /* The Infinite Scroll Animation */
+    .partners-track {
+        /* The 'scroll' keyframe is defined below */
+        animation: scroll linear infinite;
+    }
+
+    /* Pause the animation automatically on hover! */
+    .partners-track:hover {
+        animation-play-state: paused;
+    }
+
+    @keyframes scroll {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            /* We move exactly 50% of the total width. 
+            Since we duplicated the array in Svelte, 50% represents one full loop! */
+            transform: translateX(-50%);
+        }
     }
 </style>
