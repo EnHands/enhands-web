@@ -50,15 +50,15 @@
         <h1
             class="slide-in-bottom mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl">
             Enabling <span
-                class="underline underline-offset-3 decoration-8 decoration-blue-400 hover:text-indigo-600">accessible</span>
+                class="underline underline-offset-4 decoration-3 hover:decoration-blue-600 hover:text-indigo-600">accessible</span>
             prosthetic hands</h1>
         <p class="leading-normal text-base md:text-2xl mb-8 md:text-left slide-in-bottom-subtitle">Trying to
             help others, regardless of location or circumstance, one hand at a time.</p>
 
-        <div class="flex flex-col lg:flex-row lg:w-96"> <!-- Increased width to accommodate 3 buttons -->
+        <div class="flex flex-col lg:flex-row lg:w-100"> <!-- Increased width to accommodate 3 buttons -->
             <a href="mailto:info@enhands.de?subject=%F0%9F%8C%8D%F0%9F%A6%BE%F0%9F%96%90%EF%B8%8F%20Join%20us!%20%F0%9F%96%90%EF%B8%8F%F0%9F%A6%BE%F0%9F%8C%8D&body=(Hi%2C%20glad%20you%20found%20us.%20We're%20always%20happy%20to%20welcome%20new%20members!%0AWe%20meet%20regularly%20on%20Zoom%20-%20every%20Wednesday%20at%206pm%20for%20the%20technical%20team%2C%20and%20every%20Monday%20at%206pm%20for%20the%20organization%20and%20marketing%20teams.%20Once%20a%20month%20we%20meet%20for%20an%20in-person%20workshop%20day%20in%20Garching.%0A%0AThis%20is%20a%20sample%20email%20that%20you%20can%20fill%20out%20so%20we%20can%20get%20some%20information%20about%20you.)%0A%0AHi%20EnHands%20Team%2C%0A%0AI%20am%20interested%20in%20joining%20the%20student%20group.%0A%0AHere%20are%20some%20details%20about%20me%3A%0A%0AName%3A%0ADegree%20and%20semester%3A%0AInterests%3A%0APreferred%20team(s)%3A%20(Technical%2FMarketing%2FOrganization%2FI%20don't%20know%20yet)"
-                class="fade-in text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center lg:w-1/3">
-                <span class="flex justify-between w-full">
+                class="group fade-in bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center lg:w-1/3">
+                <span class="flex justify-between w-full text-white">
                     Join us!
                     <svg aria-hidden="true" class="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
                         xmlns="http://www.w3.org/2000/svg">
@@ -70,8 +70,8 @@
             </a>
 
             <a href="blog"
-                class="fade-in text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mt-4 lg:mt-0 lg:ml-4 lg:w-1/3">
-                <span class="flex justify-between w-full">
+                class="group fade-in border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mt-4 lg:mt-0 lg:ml-4 lg:w-1/3">
+                <span class="flex justify-between w-full text-blue-700 group-hover:text-white">
                     Blog
                     <svg aria-hidden="true" class="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
                         xmlns="http://www.w3.org/2000/svg">
@@ -84,8 +84,8 @@
 
 
             <a href="/about-enhands.pdf" target="_blank" rel="noopener noreferer" 
-                class="fade-in text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mt-4 lg:mt-0 lg:ml-4 lg:w-1/3">
-                <span class="flex justify-between w-full">
+                class="group fade-in border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mt-4 lg:mt-0 lg:ml-4 lg:w-1/3">
+                <span class="flex justify-between w-full text-blue-700 group-hover:text-white">
                     About Us
                     <svg aria-hidden="true" class="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
                         xmlns="http://www.w3.org/2000/svg">
