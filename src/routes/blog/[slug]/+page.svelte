@@ -10,7 +10,7 @@
     </h1>
     
     <div class="flex flex-wrap mb-8 mt-4">
-        <div class="text-sm md:text-base font-medium text-blue-500 uppercase">{data.post.date}</div>
+        <div class="text-sm md:text-base font-medium text-blue-500 uppercase">{data.post.date ? new Date(data.post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}</div>
         <div class="ml-4 mr-4 text-sm md:text-base font-medium text-gray-400">|</div>
         <div class="text-sm md:text-base font-medium text-gray-700">{data.post.author}</div>
     </div>
