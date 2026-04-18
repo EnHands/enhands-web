@@ -3,7 +3,7 @@
     let { data } = $props();
 </script>
 
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl h-[calc(100vh-280px)] mx-auto">
     <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, {data.user.name}!</h1>
     <p class="text-gray-600 mb-8">Select an option from the sidebar to manage the EnHands website.</p>
     
