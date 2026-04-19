@@ -46,6 +46,20 @@ async function uploadImage(file) {
     return publicUrl;
 }
 
+/**
+ * Helper function to delete an old image from Supabase Storage given its public URL
+ * @param {string | null} url 
+ */
+async function deleteOldImage(url) {
+    if (!url) return;
+    const parts = url.split('/');
+    const filename = parts[parts.length - 1];
+    
+    if (filename) {
+        await supabase.storage.from('enhands-assets').remove([filename]);
+    }
+}
+
 /** @type {import('./$types').Actions} */
 export const actions = {
     // ACTION 1: Add a new member
@@ -95,25 +109,57 @@ export const actions = {
             const imgFilename = extractFilename(memberToDelete.img);
             const hoverFilename = extractFilename(memberToDelete.img_hover);
 
-            // Filter out any nulls just in case a member didn't have a hover image
-            const filesToRemove = [imgFilename, hoverFilename].filter(Boolean);
-
-            // 2. Tell Supabase Storage to delete the actual files!
-            if (filesToRemove.length > 0) {
-                const { error: storageError } = await supabase.storage
-                    .from('enhands-assets')
-                    .remove(/** @type {string[]} */(filesToRemove));
-                
-                if (storageError) {
-                    console.error("Failed to delete storage files:", storageError);
-                    // We log the error but don't crash the function, 
-                    // so the database row still gets deleted successfully!
-                }
-            }
+            await deleteOldImage(memberToDelete.img);
+            await deleteOldImage(memberToDelete.img_hover);
         }
 
         // 3. Finally, delete the row from the database
         await db.delete(members).where(eq(members.id, idToDelete));
+        return { success: true };
+    },
+
+    // ACTION 3: Edit an existing member
+    edit: async ({ request }) => {
+        const data = await request.formData();
+        const idToEdit = String(data.get('id'));
+        
+        // 1. Get the current member to see their existing images
+        const [existingMember] = await db.select()
+            .from(members)
+            .where(eq(members.id, idToEdit));
+
+        if (!existingMember) return { success: false };
+
+        // 2. Default to keeping the old image URLs
+        let finalImgUrl = existingMember.img;
+        let finalHoverUrl = existingMember.img_hover;
+
+        // 3. Extract the files from the form
+        const imgFile = /** @type {File} */ (data.get('img'));
+        const hoverFile = /** @type {File} */ (data.get('img_hover'));
+
+        // 4. If they uploaded a NEW profile image, upload it and delete the old one
+        if (imgFile && imgFile.size > 0) {
+            finalImgUrl = await uploadImage(imgFile);
+            await deleteOldImage(existingMember.img);
+        }
+
+        // 5. If they uploaded a NEW hover image, upload it and delete the old one
+        if (hoverFile && hoverFile.size > 0) {
+            finalHoverUrl = await uploadImage(hoverFile);
+            await deleteOldImage(existingMember.img_hover);
+        }
+
+        // 6. Update the database row
+        await db.update(members)
+            .set({
+                name: String(data.get('name') || ''),
+                job: String(data.get('job') || ''),
+                img: finalImgUrl,
+                img_hover: finalHoverUrl
+            })
+            .where(eq(members.id, idToEdit));
+
         return { success: true };
     }
 };
