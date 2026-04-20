@@ -1,5 +1,5 @@
 # Setup
-## Reprequisits
+## Prerequisits
 Make sure Nodedjs and Npm ist installed:
 ```sh
 sudo dnf install nodejs npm
