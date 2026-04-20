@@ -1,3 +1,26 @@
+# Setup
+## Reprequisits
+Make sure Nodedjs and Npm ist installed:
+```sh
+sudo dnf install nodejs npm
+```
+
+## Clone the Repo
+## Install project dependencies
+```sh
+npm install
+```
+## Insert Supabase credentials
+Since credential Keys should not end up on GitHub they are included in the .gitignore and therefore need to be inserted by hand.
+
+### Create a new .env file
+In the root of the project folder create a new file and name it [`.env`]
+
+### Paste Credentials
+Go to [`Supabase`](https://supabase.com/dashboard/org/lrdtcirczmadvaymmftq) and fetch the following API Keys and Information:
+- Service_Role
+- Project_ID
+  
 # sv
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
