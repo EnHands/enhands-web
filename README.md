@@ -17,9 +17,7 @@ Since credential Keys should not end up on GitHub they are included in the .giti
 In the root of the project folder create a new file and name it [`.env`]
 
 ### Paste Credentials
-Go to [`Supabase`](https://supabase.com/dashboard/org/lrdtcirczmadvaymmftq) and fetch the following API Keys and Information:
-- Service_Role
-- Project_ID
+Ask an Admin for the Supabase Credentials
   
 # sv
 
