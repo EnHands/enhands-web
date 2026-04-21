@@ -18,6 +18,11 @@ In the root of the project folder create a new file and name it [`.env`]
 
 ### Paste Credentials
 Ask an Admin for the Supabase Credentials
+
+### Start Webserver
+```sh
+npm run dev -- --open
+```
   
 # sv
 
