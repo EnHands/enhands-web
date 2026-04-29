@@ -19,7 +19,7 @@ export async function load({ parent }) {
     return { allMembers };
 }
 
-// Helper function to upload a file and return the public URL
+
 /**
  * Helper function to upload a file and return the public URL
  * @param {File} file 
