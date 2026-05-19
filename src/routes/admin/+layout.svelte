@@ -27,6 +27,8 @@
                     <a href="/admin/members" class="block px-2 py-2 rounded-md text-blue-700 font-semibold hover:bg-gray-800 transition-colors">Members</a>
                     <a href="/admin/partners" class="block px-2 py-2 rounded-md text-blue-700 font-semibold hover:bg-gray-800 transition-colors">Partners</a>
                 {/if}
+
+                <a href="/admin/settings" class="block px-2 py-2 rounded-md text-blue-700 font-semibold hover:bg-gray-800 transition-colors">Settings</a>
             </nav>
         </div>
 
