@@ -28,4 +28,10 @@ export const blog_posts = pgTable('blog_posts', {
  	created_at: timestamp('created_at').defaultNow()
 }).enableRLS();
 
+export const invite_tokens = pgTable('invite_tokens', {
+    id: text('id').primaryKey(), // The actual token string
+    expires_at: timestamp('expires_at').notNull(),
+    created_by: text('created_by').notNull() // Track who made the invite
+}).enableRLS();
+
 export * from './auth.schema';
