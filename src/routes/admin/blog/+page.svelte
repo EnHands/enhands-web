@@ -1,56 +1,58 @@
 <script>
-    import { onMount } from 'svelte';
     import { enhance } from '$app/forms';
-    import { authClient } from '$lib/auth-client';
-    
+    import { marked } from 'marked';
+
     /** @type {{ data: import('./$types').PageData }} */
     let { data } = $props();
 
     let isEditorOpen = $state(false);
-
-    /** @type {import('quill').default | null} */
-    let quill = $state(null);
-
-    /** @type {HTMLDivElement | null} */
-    let editorContainer = $state(null);
-
     /** @type {string | null} */
     let editingPostId = $state(null);
+    let isImportingZip = $state(false);
     
     // Form States
     let title = $state('');
     let slug = $derived(title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''));
-    let author = $state(''); // Default to current user in the effect below
-    let date = $state(new Date().toISOString().split('T')[0]); // Default to today (YYYY-MM-DD)
+    let author = $state('');
+    let date = $state(new Date().toISOString().split('T')[0]);
     let isUploading = $state(false);
+
+    // Markdown specific states
+    let markdownText = $state(''); 
+    
+    // Svelte 5 derived rune to instantly compile HTML as you type
+    let renderedHtml = $derived.by(() => {
+        if (!markdownText) return '';
+        
+        let customMarkdown = markdownText;
+        
+        // Custom Block Replacement for the side-by-side images!
+        // Replaces "::: GRID \n ... \n :::" with custom Tailwind grid divs
+        customMarkdown = customMarkdown.replace(
+            /:::\s*GRID\n([\s\S]*?)\n:::/g,
+            (match, innerContent) => {
+                // 1. Compile the Markdown into HTML *before* wrapping it in the div.
+                // Using parseInline prevents marked from wrapping the images in a <p> tag.
+                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim()));
+                
+                // 2. Strip out any stray <br> tags marked generated from your enter keys.
+                // (CSS Grids treat <br> tags as grid items, which ruins the side-by-side layout!)
+                
+                compiledImages = compiledImages.replace(/<br\s*\/?>/gi, '');
+
+                // 3. Wrap our perfectly clean images in the Tailwind grid.
+                return `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">\n${compiledImages}\n</div>`;
+            }
+        );
+
+        return marked.parse(customMarkdown, { breaks: true });
+    });
 
     $effect(() => {
         if (data.user?.name && !author && !editingPostId) {
             author = data.user.name;
         }
     });
-
-    /** @param {File} file */
-    async function uploadEditorImage(file) {
-        // 1. Pack the file into a FormData object
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // 2. Shoot it over to our secure SvelteKit API endpoint
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error || 'Upload failed');
-        }
-
-        // 3. Extract and return the URL!
-        const data = await response.json();
-        return data.url;
-    }
 
     /** @param {import('./$types').PageData['posts'][0]} post */
     function openEditModal(post) {
@@ -59,86 +61,18 @@
         slug = post.slug ?? '';
         author = post.author ?? '';
         date = post.date ?? '';
-        isEditorOpen = true;
         
-        // We wait for the editor to initialize, then set content
-        setTimeout(() => {
-            if (quill){ 
-                quill.root.innerHTML = post.content ?? '';
-            }
-        }, 100);
+        // Load the raw markdown from the database into the editor
+        markdownText = post.content ?? ''; 
+        isEditorOpen = true;
     }
-
-    // Initialize Quill only when the editor opens
-    $effect(() => {
-        if (isEditorOpen && editorContainer && !quill) {
-            const container = editorContainer;
-            import('quill').then((QuillModule) => {
-                const Quill = QuillModule.default;
-                const instance = new Quill(container, {
-                    theme: 'snow',
-                    placeholder: 'Write your story here...',
-                    modules: {
-                        toolbar: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            ['blockquote', 'code-block'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            ['link', 'image', 'clean']
-                        ]
-                    }
-                });
-
-                instance.root.addEventListener('drop', async (e) => {
-                    e.preventDefault();
-                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                        const file = e.dataTransfer.files[0];
-                        if (file.type.startsWith('image/')) {
-                            const url = await uploadEditorImage(file);
-                            const range = instance.getSelection();
-                            if (range) {
-                                instance.insertEmbed(range.index, 'image', url);
-                            }
-                        }
-                    }
-                }, false);
-
-                quill = instance;
-                /** @type {any} */
-                const toolbar = instance.getModule('toolbar');
-                toolbar.addHandler('image', () => {
-                    const input = document.createElement('input');
-                    input.setAttribute('type', 'file');
-                    input.setAttribute('accept', 'image/*');
-                    input.click();
-
-                    input.onchange = async () => {
-                        // 2. Satisfy 'input.files is possibly null'
-                        if (input.files && input.files.length > 0) {
-                            const file = input.files[0];
-                            const url = await uploadEditorImage(file);
-                            
-                            // 3. Re-verify 'instance' (quill) and selection range
-                            const range = instance.getSelection();
-                            if (range) {
-                                instance.insertEmbed(range.index, 'image', url);
-                            } else {
-                                // If user clicked away, just stick it at the end
-                                instance.insertEmbed(instance.getLength(), 'image', url);
-                            }
-                        }
-                    };
-                });
-            });
-        }
-    });
 
     function closeEditor() {
         isEditorOpen = false;
-        editingPostId = null; // CRITICAL: Reset the ID
-        quill = null;
+        editingPostId = null;
+        markdownText = '';
         title = '';
-        author = data.user.name; // Reset to current user
+        author = data.user?.name ?? '';
         date = new Date().toISOString().split('T')[0];
     }
 </script>
@@ -146,24 +80,57 @@
 <div class="max-w-6xl mx-auto">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Blog Management</h1>
-        <button onclick={() => { editingPostId = null; isEditorOpen = true;}} class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold transition-all shadow-md">
+        <button 
+            onclick={() => { editingPostId = null; isEditorOpen = true; }} 
+            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold transition-all shadow-md"
+        >
             + New Post
         </button>
     </div>
 
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-
     {#if isEditorOpen}
         <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+                <form id="zip-upload-form" method="POST" action="?/importZip" enctype="multipart/form-data" class="hidden" use:enhance={() => {
+                    isImportingZip = true;
+                    return async ({ result }) => {
+                        if (result.type === 'success') {
+                            /** @type {{ markdown?: string }} */
+                            const data = result.data || {};
+                            markdownText = data.markdown || '';
+                        } else if (result.type === 'failure') {
+                            /** @type {{ error?: string }} */
+                            const data = result.data || {};
+                            alert(data.error || 'Failed to import ZIP file.');
+                        }
+                        isImportingZip = false;
+                        
+                        // Clear the input so the same file can be uploaded again if needed
+                        const fileInput = /** @type {HTMLInputElement | null} */ (document.getElementById('hidden-zip-input'));
+                        if (fileInput) fileInput.value = '';
+                    };
+                }}>
+                    <input 
+                        id="hidden-zip-input"
+                        type="file" 
+                        name="zipFile" 
+                        accept=".zip" 
+                        onchange={(e) => {
+                            const target = /** @type {HTMLInputElement} */ (e.target);
+                            target.form?.requestSubmit();
+                        }}
+                    />
+                </form>
+
                 <form 
                     method="POST" 
                     action={editingPostId ? "?/update" : "?/create"} 
                     enctype="multipart/form-data"
                     use:enhance={({ formData }) => {
-                        if (!quill) return;
                         isUploading = true;
-                        formData.append('content', quill.root.innerHTML);
+                        
+                        // CRITICAL: We save the raw markdown to the DB, not the HTML!
+                        formData.append('content', markdownText);
                         
                         return async ({ update }) => {
                             await update();
@@ -193,12 +160,35 @@
                         </div>
                         <div>
                             <label for="post-thumbnail" class="block text-xs font-bold uppercase text-gray-500 mb-1">Thumbnail</label>
-                            <input id="post-thumbnail" type="file" name="image" accept="image/*" class="w-full text-xs" required />
+                            <input id="post-thumbnail" type="file" name="image" accept="image/*" class="w-full text-xs" />
                         </div>
                     </div>
 
-                    <div class="flex-1 overflow-hidden p-6 bg-white">
-                        <div bind:this={editorContainer} class="h-full"></div>
+                    <div class="flex-1 flex overflow-hidden h-full bg-gray-100">
+                        <div class="w-1/2 h-full border-r border-gray-300 flex flex-col bg-gray-900 text-gray-100 p-4 shadow-inner">
+                            <div class="text-xs uppercase font-bold text-gray-400 mb-3 tracking-wider flex justify-between items-center">
+                                <span>Markdown Editor</span>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid [alt](img) :::</span>
+                                    
+                                    <label for="hidden-zip-input" class="cursor-pointer bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
+                                        {isImportingZip ? '⏳ Extracting...' : '📥 Import .ZIP'}
+                                    </label>
+                                </div>
+                            </div>
+                            <textarea 
+                                bind:value={markdownText}
+                                placeholder="# Write your heading here..." 
+                                class="w-full flex-1 bg-transparent text-gray-200 font-mono text-sm border-none p-0 focus:ring-0 resize-none h-full outline-none"
+                            ></textarea>
+                        </div>
+
+                        <div class="w-1/2 h-full overflow-y-auto bg-white p-8 prose max-w-none shadow-inner">
+                            <div class="text-xs uppercase font-bold text-gray-400 mb-6 tracking-wider border-b pb-2 select-none">
+                                Live Preview
+                            </div>
+                            {@html renderedHtml}
+                        </div>
                     </div>
 
                     <div class="p-4 border-t bg-gray-50 flex justify-end space-x-3">

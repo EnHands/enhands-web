@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { blog_posts } from '$lib/server/db/schema';
 import { supabase } from '$lib/server/supabase';
 import { eq, desc } from 'drizzle-orm';
+import { parseBlogZip } from '$lib/server/blogParser';
 
 /**
  * Helper function to upload a file and return the public URL
@@ -75,5 +76,30 @@ export const actions = {
         }).where(eq(blog_posts.id, id));
 
         return { success: true };
+    },
+
+    importZip: async ({ request }) => {
+        const data = await request.formData();
+        const file = /** @type {File} */ (data.get('zipFile'));
+        
+        if (!file || file.size === 0) {
+            return { success: false, error: 'No valid ZIP file provided.' };
+        }
+
+        try {
+            // Convert the web File object into a Node.js Buffer for the unzipper
+            const buffer = Buffer.from(await file.arrayBuffer());
+            
+            // Run our massive hybrid parser!
+            const { markdown } = await parseBlogZip(buffer);
+            
+            return { success: true, markdown };
+
+        } catch (err) {
+            console.error("ZIP parsing error:", err);
+            // Check if it's a standard Error object before grabbing the message
+            const errorMessage = err instanceof Error ? err.message : 'Failed to process ZIP file.';
+            return { success: false, error: errorMessage };
+        }
     }
 };
