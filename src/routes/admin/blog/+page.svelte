@@ -8,6 +8,7 @@
     let isEditorOpen = $state(false);
     /** @type {string | null} */
     let editingPostId = $state(null);
+    let isImportingZip = $state(false);
     
     // Form States
     let title = $state('');
@@ -26,10 +27,22 @@
         let customMarkdown = markdownText;
         
         // Custom Block Replacement for the side-by-side images!
-        // Replaces "::: grid \n ... \n :::" with custom Tailwind grid divs
+        // Replaces "::: GRID \n ... \n :::" with custom Tailwind grid divs
         customMarkdown = customMarkdown.replace(
-            /:::\s*grid\n([\s\S]*?)\n:::/g,
-            '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">$1</div>'
+            /:::\s*GRID\n([\s\S]*?)\n:::/g,
+            (match, innerContent) => {
+                // 1. Compile the Markdown into HTML *before* wrapping it in the div.
+                // Using parseInline prevents marked from wrapping the images in a <p> tag.
+                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim()));
+                
+                // 2. Strip out any stray <br> tags marked generated from your enter keys.
+                // (CSS Grids treat <br> tags as grid items, which ruins the side-by-side layout!)
+                
+                compiledImages = compiledImages.replace(/<br\s*\/?>/gi, '');
+
+                // 3. Wrap our perfectly clean images in the Tailwind grid.
+                return `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">\n${compiledImages}\n</div>`;
+            }
         );
 
         return marked.parse(customMarkdown, { breaks: true });
@@ -78,6 +91,37 @@
     {#if isEditorOpen}
         <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+                <form id="zip-upload-form" method="POST" action="?/importZip" enctype="multipart/form-data" class="hidden" use:enhance={() => {
+                    isImportingZip = true;
+                    return async ({ result }) => {
+                        if (result.type === 'success') {
+                            /** @type {{ markdown?: string }} */
+                            const data = result.data || {};
+                            markdownText = data.markdown || '';
+                        } else if (result.type === 'failure') {
+                            /** @type {{ error?: string }} */
+                            const data = result.data || {};
+                            alert(data.error || 'Failed to import ZIP file.');
+                        }
+                        isImportingZip = false;
+                        
+                        // Clear the input so the same file can be uploaded again if needed
+                        const fileInput = /** @type {HTMLInputElement | null} */ (document.getElementById('hidden-zip-input'));
+                        if (fileInput) fileInput.value = '';
+                    };
+                }}>
+                    <input 
+                        id="hidden-zip-input"
+                        type="file" 
+                        name="zipFile" 
+                        accept=".zip" 
+                        onchange={(e) => {
+                            const target = /** @type {HTMLInputElement} */ (e.target);
+                            target.form?.requestSubmit();
+                        }}
+                    />
+                </form>
+
                 <form 
                     method="POST" 
                     action={editingPostId ? "?/update" : "?/create"} 
@@ -124,7 +168,13 @@
                         <div class="w-1/2 h-full border-r border-gray-300 flex flex-col bg-gray-900 text-gray-100 p-4 shadow-inner">
                             <div class="text-xs uppercase font-bold text-gray-400 mb-3 tracking-wider flex justify-between items-center">
                                 <span>Markdown Editor</span>
-                                <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid</span>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid [alt](img) :::</span>
+                                    
+                                    <label for="hidden-zip-input" class="cursor-pointer bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
+                                        {isImportingZip ? '⏳ Extracting...' : '📥 Import .ZIP'}
+                                    </label>
+                                </div>
                             </div>
                             <textarea 
                                 bind:value={markdownText}
