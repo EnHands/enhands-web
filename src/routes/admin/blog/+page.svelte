@@ -6,6 +6,7 @@
     let { data } = $props();
 
     let isEditorOpen = $state(false);
+    /** @type {string | null} */
     let editingPostId = $state(null);
     
     // Form States
