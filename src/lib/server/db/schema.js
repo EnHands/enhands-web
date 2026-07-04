@@ -1,4 +1,5 @@
-import { pgTable, timestamp, text, uuid } from 'drizzle-orm/pg-core';
+import { boolean as bool} from 'better-auth';
+import { pgTable, timestamp, text, uuid, boolean} from 'drizzle-orm/pg-core';
 
 export const members = pgTable('members', {
 	id: uuid('id').primaryKey().defaultRandom(),
@@ -25,7 +26,8 @@ export const blog_posts = pgTable('blog_posts', {
   	title: text('title'),
   	image: text('image'),
 	content: text('content'),
- 	created_at: timestamp('created_at').defaultNow()
+ 	created_at: timestamp('created_at').defaultNow(),
+	is_published: boolean('is_published').default(false).notNull()
 }).enableRLS();
 
 export const invite_tokens = pgTable('invite_tokens', {

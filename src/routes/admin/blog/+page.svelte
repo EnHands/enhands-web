@@ -282,6 +282,7 @@
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Title</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Author</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
@@ -291,6 +292,13 @@
                         <td class="px-6 py-4 font-medium text-gray-900">{post.title}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{post.author}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{post.date}</td>
+                        <td class="px-6 py-4">
+                            {#if post.is_published}
+                                <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">Published</span>
+                            {:else}
+                                <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">Draft</span>
+                            {/if}
+                        </td>
                         <td class="px-6 py-4 text-right flex justify-end space-x-4">
                             <button 
                                 onclick={() => openEditModal(post)}
