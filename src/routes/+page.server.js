@@ -5,14 +5,6 @@ import { members } from "$lib/server/db/schema";
 import { partners } from "$lib/server/db/schema";
 
 export async function load() {
-    // SUPABASE CALL:
-    const people = await db.select().from(members);
-
-
-    // SUPABASE CALL: 
-    const supporters = await db.select().from(partners);
-    
-
     /**
      * Shuffles an array in place
      * @param {any[]} array
@@ -25,9 +17,22 @@ export async function load() {
         return array;
     }
 
-    // We return the shuffled data to the frontend
-    return {
-        members: shuffleArray(people),
-        partners: supporters
-    };
+    // If the database is unreachable the page still renders —
+    // the team and partner sections simply stay hidden.
+    try {
+        // SUPABASE CALL:
+        const people = await db.select().from(members);
+
+        // SUPABASE CALL:
+        const supporters = await db.select().from(partners);
+
+        // We return the shuffled data to the frontend
+        return {
+            members: shuffleArray(people),
+            partners: supporters
+        };
+    } catch (err) {
+        console.error('Failed to load members/partners:', err);
+        return { members: [], partners: [] };
+    }
 }
