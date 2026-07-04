@@ -3,24 +3,24 @@
     let { data } = $props();
 </script>
 
-<div class="w-auto mx-10 p-6 flex flex-col mb-8 items-center">
-    <span class="whitespace-nowrap container flex items-end justify-center w-full mt-6">
-        <img class="h-24 inline-block" src="/images/logos/Enhands_Blog.svg" alt="EnHands Blog">
-    </span>
-    <span class="whitespace-nowrap container flex items-end justify-center w-full sm:mt-2">
-        <p class="font-bold text-xl text-gray-700">The latest updates from EnHands</p>
-    </span>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 pb-8 flex flex-col items-center text-center">
+    <img class="h-20 sm:h-24" src="/images/logos/Enhands_Blog.svg" alt="EnHands Blog">
+    <p class="mt-3 text-lg sm:text-xl font-semibold text-gray-700">The latest updates from EnHands</p>
 </div>
 
-<div class="bg-white sm:rounded-3xl max-w-2xl mx-auto pb-3 pt-6 px-8 items-center gap-y-16 gap-x-8 sm:pb-1 sm:pt-12 lg:max-w-5xl lg:px-8 mb-10">
-    <div class="grid gap-8 lg:grid-cols-2">
+<div class="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-8 pb-16 sm:pb-24">
+    <div class="grid gap-6 sm:gap-8 lg:grid-cols-2">
         {#each data.posts as post}
-            <a href="/blog/{post.slug}" class="block group">
-                <div class="rounded-lg overflow-hidden mb-4 h-48">
-                    <img src={post.image} alt={post.title} class="w-full h-full object-cover transition-transform group-hover:scale-105">
+            <a href="/blog/{post.slug}"
+                class="block group bg-white rounded-2xl overflow-hidden ring-1 ring-gray-900/5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition duration-200">
+                <div class="overflow-hidden h-48">
+                    <img src={post.image} alt={post.title}
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600">{post.title}</h3>
-                <p class="text-sm text-gray-500 mb-2">{post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''} | {post.author}</p>
+                <div class="p-5 sm:p-6">
+                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{post.title}</h3>
+                    <p class="text-sm text-gray-500 mt-2">{post.date ? new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''} | {post.author}</p>
+                </div>
             </a>
         {/each}
     </div>

@@ -6,10 +6,14 @@
   display: none;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
 }
 
@@ -207,30 +211,5 @@ model-viewer>#ar-prompt>img {
     right: 16px;
     left: auto;
     transform: none;
-  }
-}
-
-/* Donate button - hidden by default */
-#donate-button {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-}
-
-/* Mobile floating Donate button */
-@media (max-width: 480px) {
-  #donate-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    bottom: 16px;
-    right: 16px;
-    background-color: #e74c3c;
-    color: #fff;
-    border-radius: 50%;
-    text-decoration: none;
-    font-size: 24px;
   }
 }
