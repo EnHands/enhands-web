@@ -263,9 +263,27 @@
 
                     <div class="p-4 border-t bg-gray-50 flex justify-end space-x-3">
                         <button type="button" onclick={closeEditor} class="px-6 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg">Cancel</button>
-                        <button type="submit" disabled={isUploading} class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50">
-                            {isUploading ? 'Publishing...' : 'Publish Post'}
-                        </button>
+                        <div class="flex space-x-3">
+                            <button 
+                                type="submit" 
+                                name="actionType" 
+                                value="draft"
+                                disabled={isUploading} 
+                                class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-bold hover:bg-gray-300 disabled:opacity-50 transition-colors"
+                            >
+                                Save as Draft
+                            </button>
+                            
+                            <button 
+                                type="submit" 
+                                name="actionType" 
+                                value="published"
+                                disabled={isUploading} 
+                                class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+                            >
+                                {isUploading ? 'Saving...' : 'Publish Post'}
+                            </button>
+                        </div>
                     </div>
                     {#if editingPostId}
                         <input type="hidden" name="id" value={editingPostId} />
