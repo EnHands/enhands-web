@@ -2,6 +2,65 @@
     import { enhance } from '$app/forms';
     import { marked } from 'marked';
 
+    let isUploadingImages = $state(false);
+
+    /** @param {Event} e */
+    async function handleImageUpload(e) {
+        const input = /** @type {HTMLInputElement} */ (e.target);
+        if (!input.files || input.files.length === 0) return;
+
+        isUploadingImages = true;
+        const files = Array.from(input.files);
+        
+        try {
+            // Upload all images simultaneously for speed
+            const uploadPromises = files.map(async (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // We reuse the API endpoint from your original Quill setup
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`Upload failed for ${file.name}`);
+                const data = await response.json();
+                return data.url;
+            });
+
+            // Wait for all uploads to finish and get the URLs
+            const uploadedUrls = await Promise.all(uploadPromises);
+
+            // Construct the Markdown!
+            let newMarkdown = '\n\n';
+            
+            // The "Cool Feature" Trigger
+            if (uploadedUrls.length === 2) {
+                newMarkdown += '::: GRID\n';
+                newMarkdown += `![Image 1](${uploadedUrls[0]})\n`;
+                newMarkdown += `![Image 2](${uploadedUrls[1]})\n`;
+                newMarkdown += ':::\n';
+            } else {
+                // Standard vertical stack for 1 image, or 3+ images
+                uploadedUrls.forEach((url, index) => {
+                    newMarkdown += `![Image ${index + 1}](${url})\n`;
+                });
+            }
+
+            // Append the new markup to the editor
+            markdownText += newMarkdown;
+
+        } catch (err) {
+            console.error("Image upload error:", err);
+            const errorMessage = err instanceof Error ? err.message : 'Failed to upload images.';
+            alert(errorMessage);
+        } finally {
+            isUploadingImages = false;
+            input.value = ''; // Reset the input so they can upload the same image again if needed
+        }
+    }
+
     /** @type {{ data: import('./$types').PageData }} */
     let { data } = $props();
 
@@ -169,8 +228,19 @@
                             <div class="text-xs uppercase font-bold text-gray-400 mb-3 tracking-wider flex justify-between items-center">
                                 <span>Markdown Editor</span>
                                 <div class="flex items-center space-x-3">
-                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid [alt](img) :::</span>
+                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid</span>
                                     
+                                    <label class="cursor-pointer bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
+                                        {isUploadingImages ? '⏳ Uploading...' : '🖼️ Add Image(s)'}
+                                        <input 
+                                            type="file" 
+                                            multiple 
+                                            accept="image/*" 
+                                            class="hidden" 
+                                            onchange={handleImageUpload} 
+                                        />
+                                    </label>
+
                                     <label for="hidden-zip-input" class="cursor-pointer bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
                                         {isImportingZip ? '⏳ Extracting...' : '📥 Import .ZIP'}
                                     </label>
