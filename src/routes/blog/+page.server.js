@@ -2,12 +2,13 @@
 
 import { db } from "$lib/server/db";
 import { blog_posts } from "$lib/server/db/schema";
-import { desc } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
 export async function load() {
     // SUPABASE CALL: 
     const posts = await db.select()
     .from(blog_posts)
+    .where(eq(blog_posts.is_published, true))
     .orderBy(desc(blog_posts.date));
 
     return { posts };

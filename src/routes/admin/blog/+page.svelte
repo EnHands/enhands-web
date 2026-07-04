@@ -2,6 +2,65 @@
     import { enhance } from '$app/forms';
     import { marked } from 'marked';
 
+    let isUploadingImages = $state(false);
+
+    /** @param {Event} e */
+    async function handleImageUpload(e) {
+        const input = /** @type {HTMLInputElement} */ (e.target);
+        if (!input.files || input.files.length === 0) return;
+
+        isUploadingImages = true;
+        const files = Array.from(input.files);
+        
+        try {
+            // Upload all images simultaneously for speed
+            const uploadPromises = files.map(async (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // We reuse the API endpoint from your original Quill setup
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(`Upload failed for ${file.name}`);
+                const data = await response.json();
+                return data.url;
+            });
+
+            // Wait for all uploads to finish and get the URLs
+            const uploadedUrls = await Promise.all(uploadPromises);
+
+            // Construct the Markdown!
+            let newMarkdown = '\n\n';
+            
+            // The "Cool Feature" Trigger
+            if (uploadedUrls.length === 2) {
+                newMarkdown += '::: GRID\n';
+                newMarkdown += `![Image 1](${uploadedUrls[0]})\n`;
+                newMarkdown += `![Image 2](${uploadedUrls[1]})\n`;
+                newMarkdown += ':::\n';
+            } else {
+                // Standard vertical stack for 1 image, or 3+ images
+                uploadedUrls.forEach((url, index) => {
+                    newMarkdown += `![Image ${index + 1}](${url})\n`;
+                });
+            }
+
+            // Append the new markup to the editor
+            markdownText += newMarkdown;
+
+        } catch (err) {
+            console.error("Image upload error:", err);
+            const errorMessage = err instanceof Error ? err.message : 'Failed to upload images.';
+            alert(errorMessage);
+        } finally {
+            isUploadingImages = false;
+            input.value = ''; // Reset the input so they can upload the same image again if needed
+        }
+    }
+
     /** @type {{ data: import('./$types').PageData }} */
     let { data } = $props();
 
@@ -169,8 +228,19 @@
                             <div class="text-xs uppercase font-bold text-gray-400 mb-3 tracking-wider flex justify-between items-center">
                                 <span>Markdown Editor</span>
                                 <div class="flex items-center space-x-3">
-                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid [alt](img) :::</span>
+                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid</span>
                                     
+                                    <label class="cursor-pointer bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
+                                        {isUploadingImages ? '⏳ Uploading...' : '🖼️ Add Image(s)'}
+                                        <input 
+                                            type="file" 
+                                            multiple 
+                                            accept="image/*" 
+                                            class="hidden" 
+                                            onchange={handleImageUpload} 
+                                        />
+                                    </label>
+
                                     <label for="hidden-zip-input" class="cursor-pointer bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
                                         {isImportingZip ? '⏳ Extracting...' : '📥 Import .ZIP'}
                                     </label>
@@ -193,9 +263,27 @@
 
                     <div class="p-4 border-t bg-gray-50 flex justify-end space-x-3">
                         <button type="button" onclick={closeEditor} class="px-6 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg">Cancel</button>
-                        <button type="submit" disabled={isUploading} class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50">
-                            {isUploading ? 'Publishing...' : 'Publish Post'}
-                        </button>
+                        <div class="flex space-x-3">
+                            <button 
+                                type="submit" 
+                                name="actionType" 
+                                value="draft"
+                                disabled={isUploading} 
+                                class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-bold hover:bg-gray-300 disabled:opacity-50 transition-colors"
+                            >
+                                Save as Draft
+                            </button>
+                            
+                            <button 
+                                type="submit" 
+                                name="actionType" 
+                                value="published"
+                                disabled={isUploading} 
+                                class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+                            >
+                                {isUploading ? 'Saving...' : 'Publish Post'}
+                            </button>
+                        </div>
                     </div>
                     {#if editingPostId}
                         <input type="hidden" name="id" value={editingPostId} />
@@ -212,6 +300,7 @@
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Title</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Author</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
@@ -221,6 +310,13 @@
                         <td class="px-6 py-4 font-medium text-gray-900">{post.title}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{post.author}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{post.date}</td>
+                        <td class="px-6 py-4">
+                            {#if post.is_published}
+                                <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">Published</span>
+                            {:else}
+                                <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">Draft</span>
+                            {/if}
+                        </td>
                         <td class="px-6 py-4 text-right flex justify-end space-x-4">
                             <button 
                                 onclick={() => openEditModal(post)}
