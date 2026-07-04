@@ -30,6 +30,9 @@ export const actions = {
         const imageFile = /** @type {File} */ (data.get('image'));
         const imageUrl = await uploadImage(imageFile);
 
+        const buttonAction = data.get('actionType'); 
+        const isPublished = buttonAction === 'published';
+
         await db.insert(blog_posts).values({
             id: crypto.randomUUID(),
             title: String(data.get('title')),
@@ -37,7 +40,8 @@ export const actions = {
             author: String(data.get('author')),
             date: String(data.get('date')),
             image: imageUrl,
-            content: String(data.get('content'))
+            content: String(data.get('content')),
+            is_published: isPublished
         });
 
         return { success: true };
@@ -54,6 +58,8 @@ export const actions = {
 
     update: async ({ request }) => {
         const data = await request.formData();
+        const buttonAction = data.get('actionType');
+        const isPublished = buttonAction === 'published';
         const id = String(data.get('id'));
         
         // Get existing to keep image if none uploaded
@@ -72,7 +78,8 @@ export const actions = {
             author: String(data.get('author')),
             date: String(data.get('date')),
             image: imageUrl,
-            content: String(data.get('content'))
+            content: String(data.get('content')),
+            is_published: isPublished
         }).where(eq(blog_posts.id, id));
 
         return { success: true };
