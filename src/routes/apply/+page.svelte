@@ -153,8 +153,14 @@
                 </table>
             </div>
             -->
+        <h2 class="text-xl font-bold text-gray-900 mt-6">Application</h2>
+        <p>
+            Please send us your <b>Name</b>, <b>Degree and Semester</b>, a <b>CV</b> (English or German), and let us know <b>which subteam you're interested in</b> and <b>what relevant skills and experience you have</b> (if applicable).
+            You can send us an email by clicking the button below. We're looking forward to hearing from you!
+        </p>
 
         </div>
+
 
         <a href="mailto:info@enhands.de?subject=%F0%9F%8C%8D%F0%9F%A6%BE%F0%9F%96%90%EF%B8%8F%20Join%20EnHands!%20%F0%9F%96%90%EF%B8%8F%F0%9F%A6%BE%F0%9F%8C%8D&body=Hi%20EnHands%20Team%2C%0Athis%20is%20my%20application%20to%20join%20EnHands%3A%0A%0A-%20Name%3A%20%20%5B...%5D%0A-%20Degree%20and%20Semester%3A%20%20%5B...%5D%0A-%20Applying%20for%20Subteam%3A%20%20%5Bplease%20put%20one%20of%20the%20subteams%20above%2C%20or%20%22Something%20else%2Fnot%20sure%20yet%22%20-%20in%20the%20latter%20case%2C%20please%20specify%20what%20you're%20interested%20in%20below%5D%0A%0A%5BPlease%20attach%20a%20CV%2C%20English%20or%20German%20are%20both%20fine%5D%0A%0ATell%20us%20more%20about%20you%2C%20relevant%20experience%20(if%20applicable)%2C%20and%20why%20you%20want%20to%20join%20EnHands%3A%0A%5B...%5D"
             class="group bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-12 py-2.5 text-center inline-flex items-center">
