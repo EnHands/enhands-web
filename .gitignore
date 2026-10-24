@@ -22,4 +22,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 .vscode/
-.idea/
+.idea/# pixi environments
+.pixi/*
+!.pixi/config.toml
+/pixi.lock
+/pixi.toml
