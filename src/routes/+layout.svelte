@@ -5,12 +5,12 @@
 
 	let { children } = $props();
 
-	let fixedBackground = $derived(page.route.id === '/blog' || page.route.id === '/blog/[slug]');
+	let fixedBackground = $derived(['/blog', '/blog/[slug]', '/privacy'].includes(page.route.id ?? ''));
 </script>
 
 <main class="overflow-x-hidden leading-normal tracking-normal text-gray-900"
 	style="font-family: 'Source Sans Pro', sans-serif;">
-	<!-- On the blog pages the background stays fixed while scrolling -->
+	<!-- On the blog and privacy pages the background stays fixed while scrolling -->
 	{#if fixedBackground}
 		<div class="fixed inset-0 -z-10 bg-right bg-cover" style="background-image:url('/images/hand.jpg');" aria-hidden="true"></div>
 	{/if}
@@ -52,12 +52,12 @@
 			</span>
 			<ul class="flex flex-wrap items-center mt-3 text-sm text-gray-500 sm:mt-0">
 				<li>
-					<a href="/" class="mr-4 hover:underline md:mr-6 ">Impressum: EnHands e.V., Freisinger Landstraße 52,
+					<span class="mr-4 md:mr-6">Impressum: EnHands e.V., Freisinger Landstraße 52,
 						85748 Garching bei München, Germany. Email: info@enhands.de. Phone: +49 (89) 289 -
-						29459</a>
+						29459</span>
 				</li>
 				<li>
-					<a href="/pages/privacy.html" class="mr-4 hover:underline md:mr-6">Privacy Policy</a>
+					<a href="/privacy" class="mr-4 hover:underline md:mr-6">Privacy Policy</a>
 				</li>
 			</ul>
 		</footer>

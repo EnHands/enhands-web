@@ -43,6 +43,10 @@
     }
 </script>
 
+<svelte:head>
+    <title>EnHands – Enabling Accessible Prosthetic Hands</title>
+</svelte:head>
+
 <!--Main-->
 <div class="pt-8 pb-10 sm:pt-20 md:pt-40 sm:px-6 mx-10 flex flex-wrap flex-col md:flex-row items-center">
     <!--Left Col-->

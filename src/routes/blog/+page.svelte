@@ -3,6 +3,10 @@
     let { data } = $props();
 </script>
 
+<svelte:head>
+    <title>EnHands Blog</title>
+</svelte:head>
+
 <div class="w-auto mx-10 p-6 flex flex-col mb-8 items-center">
     <span class="whitespace-nowrap container flex items-end justify-center w-full mt-6">
         <img class="h-24 inline-block" src="/images/logos/Enhands_Blog.svg" alt="EnHands Blog">
