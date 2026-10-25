@@ -16,7 +16,7 @@
     <div class="grid gap-8 lg:grid-cols-2">
         {#each data.posts as post}
             <a href="/blog/{post.slug}" class="block group">
-                <div class="rounded-lg overflow-hidden mb-4 h-48">
+                <div class="rounded-lg overflow-hidden mb-4 aspect-3/2">
                     <img src={post.image} alt={post.title} class="w-full h-full object-cover transition-transform group-hover:scale-105">
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600">{post.title}</h3>
