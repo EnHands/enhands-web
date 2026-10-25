@@ -1,13 +1,21 @@
 <script>
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import { page } from '$app/state';
 
 	let { children } = $props();
+
+	let fixedBackground = $derived(page.route.id === '/blog' || page.route.id === '/blog/[slug]');
 </script>
 
 <main class="overflow-x-hidden leading-normal tracking-normal text-gray-900"
 	style="font-family: 'Source Sans Pro', sans-serif;">
-	<div class="h-screen pb-14 bg-right bg-cover" style="background-image:url('/images/hand.jpg');">
+	<!-- On the blog pages the background stays fixed while scrolling -->
+	{#if fixedBackground}
+		<div class="fixed inset-0 -z-10 bg-right bg-cover" style="background-image:url('/images/hand.jpg');" aria-hidden="true"></div>
+	{/if}
+	<div class="h-screen pb-14" class:bg-right={!fixedBackground} class:bg-cover={!fixedBackground}
+		style:background-image={fixedBackground ? null : "url('/images/hand.jpg')"}>
 		<div class="w-auto mx-10 p-6">
 			<div class="w-full flex items-center justify-between">
 				<a class="flex items-center text-indigo-400 no-underline hover:no-underline font-bold text-2xl lg:text-4xl"
