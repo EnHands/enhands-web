@@ -22,6 +22,10 @@
     }
 </script>
 
+<svelte:head>
+    <title>Apply for EnHands!</title>
+</svelte:head>
+
 <!-- Link to a job description PDF, with a document icon in front of the label. -->
 {#snippet pdfLink(/** @type {string} */ href, /** @type {string} */ text = 'Details')}
     <a {href} target="_blank" rel="noopener noreferrer"
