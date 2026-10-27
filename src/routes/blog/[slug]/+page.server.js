@@ -6,6 +6,7 @@ import { eq, desc } from 'drizzle-orm'; // Drizzle's "equals" helper
 import { marked } from 'marked'; // Import the marked library for Markdown parsing
 
 // 1. Definiere den Custom Renderer einmalig auf Dateiebene
+// Currently not called, due to visualization issues during scrolling
 const renderer = new marked.Renderer();
 renderer.image = (href, title, text) => {
     // Fallbacks, falls kein Alt-Text oder Titel gesetzt wurde, 
@@ -41,7 +42,7 @@ export async function load({ params }) {
             (match, innerContent) => {
                 // 1. Compile the Markdown into HTML *before* wrapping it in the div.
                 // Using parseInline prevents marked from wrapping the images in a <p> tag.
-                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim(), { renderer }));
+                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim()));
                 
                 // 2. Strip out any stray <br> tags marked generated from your enter keys.
                 // (CSS Grids treat <br> tags as grid items, which ruins the side-by-side layout!)
@@ -54,7 +55,7 @@ export async function load({ params }) {
         );
         // Konvertiere das Markdown zu HTML.
         // (Promise.resolve fängt Fälle ab, in denen marked async genutzt wird)
-        post.content = await Promise.resolve(marked.parse(customMarkdown, { renderer }));
+        post.content = await Promise.resolve(marked.parse(customMarkdown));
     }
     
 
