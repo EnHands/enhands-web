@@ -555,11 +555,11 @@
                 
                 <div class="card-image-area">
                     {#if member.img_hover}
-                        <img class="img-nohover w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait">
-                        <img class="img-hover w-full max-h-60 object-cover" src={member.img_hover} alt="{member.name} portrait">
+                        <img class="img-nohover w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait" loading="lazy">
+                        <img class="img-hover w-full max-h-60 object-cover" src={member.img_hover} alt="{member.name} portrait" loading="lazy">
                     
                     {:else}
-                        <img class="w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait">
+                        <img class="w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait" loading="lazy">
                     {/if}
                 </div>
                 
