@@ -49,6 +49,7 @@
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.103.3",
+		"browser-image-compression": "^2.0.2",
 		"marked": "^18.0.5",
 		"quill": "^2.0.3",
 		"showdown": "^2.1.0",
