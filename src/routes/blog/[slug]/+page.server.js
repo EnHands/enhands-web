@@ -5,6 +5,18 @@ import { blog_posts } from '$lib/server/db/schema';
 import { eq, desc } from 'drizzle-orm'; // Drizzle's "equals" helper
 import { marked } from 'marked'; // Import the marked library for Markdown parsing
 
+// 1. Definiere den Custom Renderer einmalig auf Dateiebene
+const renderer = new marked.Renderer();
+renderer.image = (href, title, text) => {
+    // Fallbacks, falls kein Alt-Text oder Titel gesetzt wurde, 
+    // damit nicht fälschlicherweise der String "null" gerendert wird.
+    const titleAttr = title ? ` title="${title}"` : '';
+    const altAttr = text ? ` alt="${text}"` : '';
+    
+    // Füge das entscheidende loading="lazy" hinzu
+    return `<img src="${href}"${altAttr}${titleAttr} loading="lazy" class="w-full h-auto rounded-lg shadow-sm" />`;
+};
+
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
     const result = await db.select()
@@ -15,7 +27,7 @@ export async function load({ params }) {
     // 2. Extract the single post from the results array
     const post = result[0];
         
-    if (!post.content) {
+    if (!post || !post.content) {
         throw error(404, 'Post content not found');
     }
 
@@ -29,7 +41,7 @@ export async function load({ params }) {
             (match, innerContent) => {
                 // 1. Compile the Markdown into HTML *before* wrapping it in the div.
                 // Using parseInline prevents marked from wrapping the images in a <p> tag.
-                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim()));
+                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim(), { renderer }));
                 
                 // 2. Strip out any stray <br> tags marked generated from your enter keys.
                 // (CSS Grids treat <br> tags as grid items, which ruins the side-by-side layout!)
@@ -42,7 +54,7 @@ export async function load({ params }) {
         );
         // Konvertiere das Markdown zu HTML.
         // (Promise.resolve fängt Fälle ab, in denen marked async genutzt wird)
-        post.content = await Promise.resolve(marked.parse(customMarkdown));
+        post.content = await Promise.resolve(marked.parse(customMarkdown, { renderer }));
     }
     
 
