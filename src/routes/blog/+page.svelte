@@ -28,4 +28,32 @@
             </a>
         {/each}
     </div>
+    <!-- NEU: Die Paginierungs-Buttons -->
+    <div class="flex items-center justify-between mt-12 pt-8 border-t border-gray-200">
+        <div>
+            {#if data.pagination.hasPrevPage}
+                <a 
+                    href="?page={data.pagination.currentPage - 1}" 
+                    class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm inline-flex items-center"
+                >
+                    &larr; Neuere Beiträge
+                </a>
+            {/if}
+        </div>
+
+        <span class="text-sm text-gray-500 font-medium">
+            Seite {data.pagination.currentPage}
+        </span>
+
+        <div>
+            {#if data.pagination.hasNextPage}
+                <a 
+                    href="?page={data.pagination.currentPage + 1}" 
+                    class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm inline-flex items-center"
+                >
+                    Ältere Beiträge &rarr;
+                </a>
+            {/if}
+        </div>
+    </div>
 </div>
