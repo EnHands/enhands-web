@@ -5,6 +5,19 @@ import { blog_posts } from '$lib/server/db/schema';
 import { eq, desc } from 'drizzle-orm'; // Drizzle's "equals" helper
 import { marked } from 'marked'; // Import the marked library for Markdown parsing
 
+// 1. Definiere den Custom Renderer einmalig auf Dateiebene
+// Currently not called, due to visualization issues during scrolling
+const renderer = new marked.Renderer();
+renderer.image = (href, title, text) => {
+    // Fallbacks, falls kein Alt-Text oder Titel gesetzt wurde, 
+    // damit nicht fälschlicherweise der String "null" gerendert wird.
+    const titleAttr = title ? ` title="${title}"` : '';
+    const altAttr = text ? ` alt="${text}"` : '';
+    
+    // Füge das entscheidende loading="lazy" hinzu
+    return `<img src="${href}"${altAttr}${titleAttr} loading="lazy" class="w-full h-auto rounded-lg shadow-sm" />`;
+};
+
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
     const result = await db.select()
@@ -15,7 +28,7 @@ export async function load({ params }) {
     // 2. Extract the single post from the results array
     const post = result[0];
         
-    if (!post.content) {
+    if (!post || !post.content) {
         throw error(404, 'Post content not found');
     }
 

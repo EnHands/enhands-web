@@ -1,6 +1,7 @@
 <script>
     import { enhance } from '$app/forms';
     import { marked } from 'marked';
+    import imageCompression from 'browser-image-compression';
 
     let isUploadingImages = $state(false);
 
@@ -11,12 +12,23 @@
 
         isUploadingImages = true;
         const files = Array.from(input.files);
+
+        //Die Vorgaben für die Komprimierung
+        const options = {
+            maxSizeMB: 0.5,         // Maximal 500 KB pro Bild
+            maxWidthOrHeight: 1920, // 4K oder größere Bilder werden auf 1080p-Standard runterskaliert
+            useWebWorker: true      // Hält den Browser flüssig, während er rechnet
+        };
         
         try {
             // Upload all images simultaneously for speed
             const uploadPromises = files.map(async (file) => {
+
+                // Komprimiere das Bild, bevor es hochgeladen wird
+                const compressedFile = await imageCompression(file, options);
+
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', compressedFile, file.name);
 
                 // We reuse the API endpoint from your original Quill setup
                 const response = await fetch('/api/upload', {
@@ -188,10 +200,24 @@
                     use:enhance={({ formData }) => {
                         isUploading = true;
                         
-                        // CRITICAL: We save the raw markdown to the DB, not the HTML!
+                        //We save the raw markdown to the DB, not the HTML!
                         formData.append('content', markdownText);
                         
                         return async ({ update }) => {
+                            // Vor dem Senden an den Server checken wir das Thumbnail!
+                            const imageFile = formData.get('image');
+                            if (imageFile instanceof File && imageFile.size > 0) {
+                                try {
+                                    const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: true };
+                                    // Jetzt weiß TypeScript, dass imageFile ein File ist und erlaubt .size und .name
+                                    const compressedThumbnail = await imageCompression(imageFile, options);
+                                    
+                                    formData.set('image', compressedThumbnail, imageFile.name);
+                                } catch (error) {
+                                    console.error("Thumbnail compression error:", error);
+                                }
+                            }
+
                             await update();
                             isUploading = false;
                             closeEditor();
