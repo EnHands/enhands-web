@@ -104,7 +104,19 @@
     </div>
 
     <!--Right Col-->
-
+    <div class="w-full xl:w-1/2 px-2 xl:pl-8 mt-8 xl:mt-0 fade-in">
+        <div class="aspect-video w-full overflow-hidden rounded-2xl shadow-2xl ring-1 ring-gray-900/10">
+            <iframe
+                class="h-full w-full"
+                src="https://www.youtube-nocookie.com/embed/QlJBRk9Rsgo"
+                title="EnHands video"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+            ></iframe>
+        </div>
+    </div>
 </div>
 
 <!-- Empty Section after the header-->
