@@ -1,5 +1,10 @@
 <script>
     import { onMount } from 'svelte';
+    import { MediaQuery } from 'svelte/reactivity';
+
+    // Wide screens (Tailwind xl) show the video beside the headline, smaller ones between "Who we are" and "Our Mission".
+    // Only one of the two is rendered so the YouTube player loads once.
+    const isWide = new MediaQuery('(min-width: 1280px)', false);
 
     /** @type {{ data: import('./$types').PageData }} */
     let {data} = $props();
@@ -48,7 +53,7 @@
 </svelte:head>
 
 <!--Main-->
-<div class="pt-8 pb-10 sm:pt-20 md:pt-40 sm:px-6 mx-10 flex flex-wrap flex-col md:flex-row items-center">
+<div class="pt-8 pb-8 sm:pt-20 md:pt-40 sm:px-6 mx-10 flex flex-wrap flex-col md:flex-row items-center">
     <!--Left Col-->
     <div class="flex flex-col w-full xl:w-1/2 justify-center mb-4 lg:items-start px-2 overflow-y-hidden">
         <h1
@@ -103,24 +108,30 @@
         </div>
     </div>
 
-    <!--Right Col-->
-    <div class="w-full xl:w-1/2 px-2 xl:pl-8 mt-8 xl:mt-0 fade-in">
-        <div class="aspect-video w-full overflow-hidden rounded-2xl shadow-2xl ring-1 ring-gray-900/10">
-            <iframe
-                class="h-full w-full"
-                src="https://www.youtube-nocookie.com/embed/QlJBRk9Rsgo"
-                title="EnHands video"
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen
-            ></iframe>
+    <!--Right Col: video on wide screens (smaller screens show it between "Who we are" and "Our Mission")-->
+    {#if isWide.current}
+        <div class="w-full xl:w-1/2 px-2 xl:pl-8 fade-in">
+            <div class="aspect-video w-4/5 mx-auto -translate-x-27 -translate-y-16 overflow-hidden rounded-2xl shadow-2xl ring-1 ring-gray-900/10">
+                {@render heroVideo()}
+            </div>
         </div>
-    </div>
+    {/if}
 </div>
 
+{#snippet heroVideo()}
+    <iframe
+        class="h-full w-full"
+        src="https://www.youtube-nocookie.com/embed/QlJBRk9Rsgo?rel=0&iv_load_policy=3&playsinline=1"
+        title="EnHands video"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+    ></iframe>
+{/snippet}
+
 <!-- Empty Section after the header-->
-<div class="w-full mx-auto pt-24 items-center sm:py-8 px-8 lg:px-36 sm:px-20"></div>
+<div class="w-full mx-auto pt-12 items-center sm:py-3 px-8 lg:px-36 sm:px-20"></div>
 
 
 <!-- Mission & About Us Section with Side Icons -->
@@ -152,6 +163,13 @@
                 </p>
             </div>
         </div>
+        <!-- Video on smaller screens: edge-to-edge between "Who we are" and "Our Mission"
+             (negative margins cancel the white box's side padding; on lg's 2-column grid it moves below both cards) -->
+        {#if !isWide.current}
+            <div class="aspect-video -mx-6 sm:-mx-8 lg:-mx-12 lg:col-span-2 lg:order-last">
+                {@render heroVideo()}
+            </div>
+        {/if}
         <!-- Our Mission Section -->
         <div class="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md">
             <div class="flex flex-wrap sm:grid w-full gap-x-4 gap-y-4 sm:grid-cols-[auto_1fr]">
