@@ -68,8 +68,8 @@
             <p>We are especially looking for new members in the following teams:</p>
             <h3 class="mb-1"><b>Product Team:</b></h3>
             <ul class="list-disc list-inside space-y-2 ml-2 mb-2">
-                <li>{@render pdfLink('/jobs/functional-hand.pdf', 'Functional Hand team')}</li>
-                <li>{@render pdfLink('/jobs/cosmetic-hand.pdf', 'Cosmetic Hand team')}</li>
+                <li><s>{@render pdfLink('/jobs/functional-hand.pdf', 'Functional Hand team')}</s> (This subteam has already reached its maximum capacity this semester.)</li>
+                <li><s>{@render pdfLink('/jobs/cosmetic-hand.pdf', 'Cosmetic Hand team')}</s> (This subteam has already reached its maximum capacity this semester.)</li>
                 <!-- <li><u><i>Cosmetic Hand subteam:</i></u> {@render pdfLink('/jobs/cosmetic-hand.pdf')}</li> -->
                 <!-- <li><i>User Feedback subteam:</i> <a href="#" class="text-blue-500 hover:text-blue-700">→ Find out more</a></li> -->
                 <!-- <li><b>Funding subteam:</b> <a href="#" class="text-blue-500 hover:text-blue-700">→ Find out more</a></li>
