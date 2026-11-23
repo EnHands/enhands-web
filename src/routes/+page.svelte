@@ -583,13 +583,13 @@
         {#each data.members as member}
             <div class="card w-36 sm:w-60 rounded overflow-hidden shadow-lg">
                 
-                <div class="card-image-area">
+                <div class="card-image-area relative aspect-square overflow-hidden bg-gray-100">
                     {#if member.img_hover}
-                        <img class="img-nohover w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait" loading="lazy">
-                        <img class="img-hover w-full max-h-60 object-cover" src={member.img_hover} alt="{member.name} portrait" loading="lazy">
+                        <img class="img-nohover absolute inset-0 w-full h-full object-cover" src={member.img} alt="{member.name} portrait" loading="lazy">
+                        <img class="img-hover absolute inset-0 w-full h-full object-cover" src={member.img_hover} alt="{member.name} portrait" loading="lazy">
                     
                     {:else}
-                        <img class="w-full max-h-60 object-cover" src={member.img} alt="{member.name} portrait" loading="lazy">
+                        <img class="absolute inset-0 w-full h-full object-cover" src={member.img} alt="{member.name} portrait" loading="lazy">
                     {/if}
                 </div>
                 
@@ -743,27 +743,20 @@
 
     }
 
+    /* Both images are stacked absolutely inside the square image area,
+       so swapping them on hover never changes the card's size. */
     .card-image-area .img-hover {
         visibility: hidden;
-        position: absolute;
-        width: 0;
-        height: 0;
     }
 
     .card-image-area:hover .img-hover,
     .card-image-area:active .img-hover {
         visibility: visible;
-        position: relative;
-        width: unset;
-        height: unset;
     }
 
     .card-image-area:hover .img-nohover,
     .card-image-area:active .img-nohover {
         visibility: hidden;
-        position: absolute;
-        width: 0;
-        height: 0;
     }
 
 

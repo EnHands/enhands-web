@@ -8,7 +8,8 @@ import { marked } from 'marked'; // Import the marked library for Markdown parsi
 // 1. Definiere den Custom Renderer einmalig auf Dateiebene
 // Currently not called, due to visualization issues during scrolling
 const renderer = new marked.Renderer();
-renderer.image = (href, title, text) => {
+/** @param {import('marked').Tokens.Image} token */
+renderer.image = ({ href, title, text }) => {
     // Fallbacks, falls kein Alt-Text oder Titel gesetzt wurde, 
     // damit nicht fälschlicherweise der String "null" gerendert wird.
     const titleAttr = title ? ` title="${title}"` : '';
