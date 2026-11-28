@@ -1,9 +1,21 @@
 <script>
     import { enhance } from '$app/forms';
-    import { marked } from 'marked';
+    import { renderBlogMarkdown } from '$lib/markdown';
+    import BlogPost from '$lib/components/BlogPost.svelte';
     import imageCompression from 'browser-image-compression';
 
     let isUploadingImages = $state(false);
+    let isInserting = $state(false);
+
+    async function handleInsertGridTemplate() {
+        isInserting = true;
+        let newMarkdown = '\n\n::: GRID "Caption"\n';
+        newMarkdown += `![Image 1](uploadedUrl1)\n`;
+        newMarkdown += `![Image 2](uploadedUrl2)\n`;
+        newMarkdown += ':::\n';
+        markdownText += newMarkdown;
+        isInserting = false;
+    }
 
     /** @param {Event} e */
     async function handleImageUpload(e) {
@@ -49,14 +61,14 @@
             
             // The "Cool Feature" Trigger
             if (uploadedUrls.length === 2) {
-                newMarkdown += '::: GRID\n';
+                newMarkdown += '::: GRID "Caption"\n';
                 newMarkdown += `![Image 1](${uploadedUrls[0]})\n`;
                 newMarkdown += `![Image 2](${uploadedUrls[1]})\n`;
                 newMarkdown += ':::\n';
             } else {
                 // Standard vertical stack for 1 image, or 3+ images
                 uploadedUrls.forEach((url, index) => {
-                    newMarkdown += `![Image ${index + 1}](${url})\n`;
+                    newMarkdown += `![Image ${index + 1}](${url} "Caption")\n`;
                 });
             }
 
@@ -85,45 +97,34 @@
     let title = $state('');
     let slug = $derived(title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''));
     let author = $state('');
+    let editors = $state('');
     let date = $state(new Date().toISOString().split('T')[0]);
     let isUploading = $state(false);
+
+    // Thumbnail shown in the preview: the newly selected file, otherwise the saved one
+    /** @type {string | null} */
+    let existingThumbnail = $state(null);
+    /** @type {string | null} */
+    let selectedThumbnail = $state(null);
+    let previewThumbnail = $derived(selectedThumbnail ?? existingThumbnail);
+
+    /** @param {string | null} url */
+    function setSelectedThumbnail(url) {
+        if (selectedThumbnail) URL.revokeObjectURL(selectedThumbnail);
+        selectedThumbnail = url;
+    }
+
+    /** @param {Event} e */
+    function handleThumbnailChange(e) {
+        const file = /** @type {HTMLInputElement} */ (e.target).files?.[0];
+        setSelectedThumbnail(file ? URL.createObjectURL(file) : null);
+    }
 
     // Markdown specific states
     let markdownText = $state(''); 
     
     // Svelte 5 derived rune to instantly compile HTML as you type
-    let renderedHtml = $derived.by(() => {
-        if (!markdownText) return '';
-        
-        let customMarkdown = markdownText;
-        
-        // Custom Block Replacement for the side-by-side images!
-        // Replaces "::: GRID \n ... \n :::" with custom Tailwind grid divs
-        customMarkdown = customMarkdown.replace(
-            /:::\s*GRID\n([\s\S]*?)\n:::/g,
-            (match, innerContent) => {
-                // 1. Compile the Markdown into HTML *before* wrapping it in the div.
-                // Using parseInline prevents marked from wrapping the images in a <p> tag.
-                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim()));
-                
-                // 2. Strip out any stray <br> tags marked generated from your enter keys.
-                // (CSS Grids treat <br> tags as grid items, which ruins the side-by-side layout!)
-                
-                compiledImages = compiledImages.replace(/<br\s*\/?>/gi, '');
-
-                // 3. Wrap our perfectly clean images in the Tailwind grid.
-                return `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">\n${compiledImages}\n</div>`;
-            }
-        );
-
-        return marked.parse(customMarkdown, { breaks: true });
-    });
-
-    $effect(() => {
-        if (data.user?.name && !author && !editingPostId) {
-            author = data.user.name;
-        }
-    });
+    let renderedHtml = $derived(markdownText ? renderBlogMarkdown(markdownText) : '');
 
     /** @param {import('./$types').PageData['posts'][0]} post */
     function openEditModal(post) {
@@ -131,7 +132,10 @@
         title = post.title ?? '';
         slug = post.slug ?? '';
         author = post.author ?? '';
+        editors = post.editors ?? '';
         date = post.date ?? '';
+        existingThumbnail = post.image ?? null;
+        setSelectedThumbnail(null);
         
         // Load the raw markdown from the database into the editor
         markdownText = post.content ?? ''; 
@@ -143,8 +147,11 @@
         editingPostId = null;
         markdownText = '';
         title = '';
-        author = data.user?.name ?? '';
+        author = '';
+        editors = '';
         date = new Date().toISOString().split('T')[0];
+        existingThumbnail = null;
+        setSelectedThumbnail(null);
     }
 </script>
 
@@ -160,8 +167,8 @@
     </div>
 
     {#if isEditorOpen}
-        <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+        <div class="fixed inset-0 z-50 flex">
+            <div class="bg-white w-full h-full flex flex-col overflow-hidden">
                 <form id="zip-upload-form" method="POST" action="?/importZip" enctype="multipart/form-data" class="hidden" use:enhance={() => {
                     isImportingZip = true;
                     return async ({ result }) => {
@@ -203,7 +210,7 @@
                         //We save the raw markdown to the DB, not the HTML!
                         formData.append('content', markdownText);
                         
-                        return async ({ update }) => {
+                        return async ({ result, update }) => {
                             // Vor dem Senden an den Server checken wir das Thumbnail!
                             const imageFile = formData.get('image');
                             if (imageFile instanceof File && imageFile.size > 0) {
@@ -218,8 +225,13 @@
                                 }
                             }
 
-                            await update();
                             isUploading = false;
+                            if (result.type === 'failure') {
+                                // Keep the editor open so nothing gets lost
+                                alert(/** @type {{ error?: string }} */ (result.data)?.error ?? 'Saving failed.');
+                                return;
+                            }
+                            await update();
                             closeEditor();
                         };
                     }}
@@ -230,22 +242,26 @@
                         <button type="button" onclick={closeEditor} class="text-gray-400 hover:text-gray-600 text-2xl px-2">&times;</button>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-white border-b">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 p-6 bg-white border-b">
                         <div>
                             <label for="post-slug" class="block text-xs font-bold uppercase text-gray-500 mb-1">Slug</label>
                             <input id="post-slug" bind:value={slug} name="slug" placeholder="welcome-post" class="w-full text-sm border-gray-200 rounded-md" required />
                         </div>
                         <div>
                             <label for="post-author" class="block text-xs font-bold uppercase text-gray-500 mb-1">Author</label>
-                            <input id="post-author" bind:value={author} name="author" class="w-full text-sm border-gray-200 rounded-md" required />
+                            <input id="post-author" bind:value={author} name="author" placeholder="Required" class="w-full text-sm border-gray-200 rounded-md" required />
+                        </div>
+                        <div>
+                            <label for="post-editors" class="block text-xs font-bold uppercase text-gray-500 mb-1">Editors</label>
+                            <input id="post-editors" bind:value={editors} name="editors" placeholder="Optional, e.g. Jane Doe, John Doe" class="w-full text-sm border-gray-200 rounded-md" />
                         </div>
                         <div>
                             <label for="post-date" class="block text-xs font-bold uppercase text-gray-500 mb-1">Date</label>
                             <input id="post-date" bind:value={date} type="date" name="date" class="w-full text-sm border-gray-200 rounded-md" required />
                         </div>
                         <div>
-                            <label for="post-thumbnail" class="block text-xs font-bold uppercase text-gray-500 mb-1">Thumbnail</label>
-                            <input id="post-thumbnail" type="file" name="image" accept="image/*" class="w-full text-xs" />
+                            <label for="post-thumbnail" class="block text-xs font-bold uppercase text-gray-500 mb-1">Title Image</label>
+                            <input id="post-thumbnail" type="file" name="image" accept="image/*" class="w-full text-xs" onchange={handleThumbnailChange} />
                         </div>
                     </div>
 
@@ -254,7 +270,13 @@
                             <div class="text-xs uppercase font-bold text-gray-400 mb-3 tracking-wider flex justify-between items-center">
                                 <span>Markdown Editor</span>
                                 <div class="flex items-center space-x-3">
-                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid</span>
+                                    <button 
+                                        class="cursor-pointer bg-blue-400 hover:bg-blue-600 text-black px-3 py-1 rounded flex items-center transition-colors shadow-sm"
+                                        onclick={handleInsertGridTemplate}
+                                    >
+                                        {isInserting  ? '⏳ Inserting...' : 'Image Grid Template'}
+                                        
+                                    </button>
                                     
                                     <label class="cursor-pointer bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
                                         {isUploadingImages ? '⏳ Uploading...' : '🖼️ Add Image(s)'}
@@ -274,16 +296,26 @@
                             </div>
                             <textarea 
                                 bind:value={markdownText}
-                                placeholder="# Write your heading here..." 
+                                placeholder={'# Write your heading here...\n\nImages with caption:\n![Alt text](image-url "Your caption")\n\nImage grid with caption:\n::: GRID "Your caption"\n![Image 1](url1)\n![Image 2](url2)\n:::'}
                                 class="w-full flex-1 bg-transparent text-gray-200 font-mono text-sm border-none p-0 focus:ring-0 resize-none h-full outline-none"
                             ></textarea>
                         </div>
 
-                        <div class="w-1/2 h-full overflow-y-auto bg-white p-8 prose max-w-none shadow-inner">
-                            <div class="text-xs uppercase font-bold text-gray-400 mb-6 tracking-wider border-b pb-2 select-none">
+                        <!-- Live preview: same component and background as the published post page -->
+                        <div class="w-1/2 h-full overflow-y-auto shadow-inner bg-right bg-cover" style="background-image:url('/images/hand.jpg');">
+                            <div class="sticky top-0 z-10 px-4 py-2 text-xs uppercase font-bold text-gray-500 tracking-wider bg-white/90 backdrop-blur-sm border-b select-none">
                                 Live Preview
                             </div>
-                            {@html renderedHtml}
+                            <div class="p-6">
+                                <BlogPost
+                                    title={title || 'Post Title'}
+                                    {date}
+                                    {author}
+                                    {editors}
+                                    image={previewThumbnail}
+                                    html={renderedHtml}
+                                />
+                            </div>
                         </div>
                     </div>
 
