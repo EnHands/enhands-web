@@ -1,6 +1,7 @@
 <script>
     import { enhance } from '$app/forms';
     import { renderBlogMarkdown } from '$lib/markdown';
+    import BlogPost from '$lib/components/BlogPost.svelte';
     import imageCompression from 'browser-image-compression';
 
     let isUploadingImages = $state(false);
@@ -99,6 +100,25 @@
     let date = $state(new Date().toISOString().split('T')[0]);
     let isUploading = $state(false);
 
+    // Thumbnail shown in the preview: the newly selected file, otherwise the saved one
+    /** @type {string | null} */
+    let existingThumbnail = $state(null);
+    /** @type {string | null} */
+    let selectedThumbnail = $state(null);
+    let previewThumbnail = $derived(selectedThumbnail ?? existingThumbnail);
+
+    /** @param {string | null} url */
+    function setSelectedThumbnail(url) {
+        if (selectedThumbnail) URL.revokeObjectURL(selectedThumbnail);
+        selectedThumbnail = url;
+    }
+
+    /** @param {Event} e */
+    function handleThumbnailChange(e) {
+        const file = /** @type {HTMLInputElement} */ (e.target).files?.[0];
+        setSelectedThumbnail(file ? URL.createObjectURL(file) : null);
+    }
+
     // Markdown specific states
     let markdownText = $state(''); 
     
@@ -118,6 +138,8 @@
         slug = post.slug ?? '';
         author = post.author ?? '';
         date = post.date ?? '';
+        existingThumbnail = post.image ?? null;
+        setSelectedThumbnail(null);
         
         // Load the raw markdown from the database into the editor
         markdownText = post.content ?? ''; 
@@ -131,6 +153,8 @@
         title = '';
         author = data.user?.name ?? '';
         date = new Date().toISOString().split('T')[0];
+        existingThumbnail = null;
+        setSelectedThumbnail(null);
     }
 </script>
 
@@ -146,8 +170,8 @@
     </div>
 
     {#if isEditorOpen}
-        <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
+        <div class="fixed inset-0 z-50 flex">
+            <div class="bg-white w-full h-full flex flex-col overflow-hidden">
                 <form id="zip-upload-form" method="POST" action="?/importZip" enctype="multipart/form-data" class="hidden" use:enhance={() => {
                     isImportingZip = true;
                     return async ({ result }) => {
@@ -231,7 +255,7 @@
                         </div>
                         <div>
                             <label for="post-thumbnail" class="block text-xs font-bold uppercase text-gray-500 mb-1">Thumbnail</label>
-                            <input id="post-thumbnail" type="file" name="image" accept="image/*" class="w-full text-xs" />
+                            <input id="post-thumbnail" type="file" name="image" accept="image/*" class="w-full text-xs" onchange={handleThumbnailChange} />
                         </div>
                     </div>
 
@@ -271,11 +295,20 @@
                             ></textarea>
                         </div>
 
-                        <div class="w-1/2 h-full overflow-y-auto bg-white p-8 prose max-w-none shadow-inner">
-                            <div class="text-xs uppercase font-bold text-gray-400 mb-6 tracking-wider border-b pb-2 select-none">
+                        <!-- Live preview: same component and background as the published post page -->
+                        <div class="w-1/2 h-full overflow-y-auto shadow-inner bg-right bg-cover" style="background-image:url('/images/hand.jpg');">
+                            <div class="sticky top-0 z-10 px-4 py-2 text-xs uppercase font-bold text-gray-500 tracking-wider bg-white/90 backdrop-blur-sm border-b select-none">
                                 Live Preview
                             </div>
-                            {@html renderedHtml}
+                            <div class="p-6">
+                                <BlogPost
+                                    title={title || 'Post Title'}
+                                    {date}
+                                    {author}
+                                    image={previewThumbnail}
+                                    html={renderedHtml}
+                                />
+                            </div>
                         </div>
                     </div>
 
