@@ -260,7 +260,7 @@
                             <input id="post-date" bind:value={date} type="date" name="date" class="w-full text-sm border-gray-200 rounded-md" required />
                         </div>
                         <div>
-                            <label for="post-thumbnail" class="block text-xs font-bold uppercase text-gray-500 mb-1">Thumbnail</label>
+                            <label for="post-thumbnail" class="block text-xs font-bold uppercase text-gray-500 mb-1">Title Image</label>
                             <input id="post-thumbnail" type="file" name="image" accept="image/*" class="w-full text-xs" onchange={handleThumbnailChange} />
                         </div>
                     </div>
