@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { blog_posts } from '$lib/server/db/schema';
 import { supabase } from '$lib/server/supabase';
 import { eq, desc } from 'drizzle-orm';
+import { fail } from '@sveltejs/kit';
 import { parseBlogZip } from '$lib/server/blogParser';
 
 /**
@@ -17,6 +18,16 @@ async function uploadImage(file) {
     return publicUrl;
 }
 
+/**
+ * Reads author/editors from the form. Author is mandatory, editors are optional.
+ * @param {FormData} data
+ */
+function readPeople(data) {
+    const author = String(data.get('author') ?? '').trim();
+    const editors = String(data.get('editors') ?? '').trim();
+    return { author, editors: editors || null };
+}
+
 /** @type {import('./$types').PageServerLoad} */
 export async function load() {
     const posts = await db.select().from(blog_posts).orderBy(desc(blog_posts.date));
@@ -27,6 +38,9 @@ export async function load() {
 export const actions = {
     create: async ({ request }) => {
         const data = await request.formData();
+        const { author, editors } = readPeople(data);
+        if (!author) return fail(400, { error: 'Author is required.' });
+
         const imageFile = /** @type {File} */ (data.get('image'));
         const imageUrl = await uploadImage(imageFile);
 
@@ -37,7 +51,8 @@ export const actions = {
             id: crypto.randomUUID(),
             title: String(data.get('title')),
             slug: String(data.get('slug')),
-            author: String(data.get('author')),
+            author,
+            editors,
             date: String(data.get('date')),
             image: imageUrl,
             content: String(data.get('content')),
@@ -58,6 +73,9 @@ export const actions = {
 
     update: async ({ request }) => {
         const data = await request.formData();
+        const { author, editors } = readPeople(data);
+        if (!author) return fail(400, { error: 'Author is required.' });
+
         const buttonAction = data.get('actionType');
         const isPublished = buttonAction === 'published';
         const id = String(data.get('id'));
@@ -75,7 +93,8 @@ export const actions = {
         await db.update(blog_posts).set({
             title: String(data.get('title')),
             slug: String(data.get('slug')),
-            author: String(data.get('author')),
+            author,
+            editors,
             date: String(data.get('date')),
             image: imageUrl,
             content: String(data.get('content')),

@@ -13,6 +13,7 @@
     title={data.post.title ?? ''}
     date={data.post.date}
     author={data.post.author}
+    editors={data.post.editors}
     image={data.post.image}
     html={data.post.content ?? ''}
 />

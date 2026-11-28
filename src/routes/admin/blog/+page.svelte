@@ -97,6 +97,7 @@
     let title = $state('');
     let slug = $derived(title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''));
     let author = $state('');
+    let editors = $state('');
     let date = $state(new Date().toISOString().split('T')[0]);
     let isUploading = $state(false);
 
@@ -125,18 +126,13 @@
     // Svelte 5 derived rune to instantly compile HTML as you type
     let renderedHtml = $derived(markdownText ? renderBlogMarkdown(markdownText) : '');
 
-    $effect(() => {
-        if (data.user?.name && !author && !editingPostId) {
-            author = data.user.name;
-        }
-    });
-
     /** @param {import('./$types').PageData['posts'][0]} post */
     function openEditModal(post) {
         editingPostId = post.id;
         title = post.title ?? '';
         slug = post.slug ?? '';
         author = post.author ?? '';
+        editors = post.editors ?? '';
         date = post.date ?? '';
         existingThumbnail = post.image ?? null;
         setSelectedThumbnail(null);
@@ -151,7 +147,8 @@
         editingPostId = null;
         markdownText = '';
         title = '';
-        author = data.user?.name ?? '';
+        author = '';
+        editors = '';
         date = new Date().toISOString().split('T')[0];
         existingThumbnail = null;
         setSelectedThumbnail(null);
@@ -213,7 +210,7 @@
                         //We save the raw markdown to the DB, not the HTML!
                         formData.append('content', markdownText);
                         
-                        return async ({ update }) => {
+                        return async ({ result, update }) => {
                             // Vor dem Senden an den Server checken wir das Thumbnail!
                             const imageFile = formData.get('image');
                             if (imageFile instanceof File && imageFile.size > 0) {
@@ -228,8 +225,13 @@
                                 }
                             }
 
-                            await update();
                             isUploading = false;
+                            if (result.type === 'failure') {
+                                // Keep the editor open so nothing gets lost
+                                alert(/** @type {{ error?: string }} */ (result.data)?.error ?? 'Saving failed.');
+                                return;
+                            }
+                            await update();
                             closeEditor();
                         };
                     }}
@@ -240,14 +242,18 @@
                         <button type="button" onclick={closeEditor} class="text-gray-400 hover:text-gray-600 text-2xl px-2">&times;</button>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-white border-b">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 p-6 bg-white border-b">
                         <div>
                             <label for="post-slug" class="block text-xs font-bold uppercase text-gray-500 mb-1">Slug</label>
                             <input id="post-slug" bind:value={slug} name="slug" placeholder="welcome-post" class="w-full text-sm border-gray-200 rounded-md" required />
                         </div>
                         <div>
                             <label for="post-author" class="block text-xs font-bold uppercase text-gray-500 mb-1">Author</label>
-                            <input id="post-author" bind:value={author} name="author" class="w-full text-sm border-gray-200 rounded-md" required />
+                            <input id="post-author" bind:value={author} name="author" placeholder="Required" class="w-full text-sm border-gray-200 rounded-md" required />
+                        </div>
+                        <div>
+                            <label for="post-editors" class="block text-xs font-bold uppercase text-gray-500 mb-1">Editors</label>
+                            <input id="post-editors" bind:value={editors} name="editors" placeholder="Optional, e.g. Jane Doe, John Doe" class="w-full text-sm border-gray-200 rounded-md" />
                         </div>
                         <div>
                             <label for="post-date" class="block text-xs font-bold uppercase text-gray-500 mb-1">Date</label>
@@ -305,6 +311,7 @@
                                     title={title || 'Post Title'}
                                     {date}
                                     {author}
+                                    {editors}
                                     image={previewThumbnail}
                                     html={renderedHtml}
                                 />
