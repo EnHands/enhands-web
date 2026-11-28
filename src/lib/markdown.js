@@ -1,6 +1,9 @@
 // Shared Markdown rendering for blog posts (admin live preview + public post page).
 import { Marked } from 'marked';
 
+// Styling for all image captions (single images and grids)
+const CAPTION_CLASSES = 'mt-2 text-xs italic text-gray-500';
+
 /** @param {string} str */
 const escapeHtml = (str) =>
     str.replace(/[&<>"']/g, (c) => /** @type {Record<string, string>} */ ({
@@ -33,7 +36,7 @@ const marked = new Marked({
                 // Render the <img> without the title attribute; the caption replaces it
                 const img = this.image({ ...image, title: null });
                 if (!caption) return img;
-                return `<figure>${img}<figcaption class="mt-2 text-sm text-gray-500">${escapeHtml(caption)}</figcaption></figure>`;
+                return `<figure>${img}<figcaption class="${CAPTION_CLASSES}">${escapeHtml(caption)}</figcaption></figure>`;
             });
 
             // Text after the images (e.g. no blank line between image and text)
@@ -66,7 +69,7 @@ export function renderBlogMarkdown(markdown) {
             // every image becomes its own grid item (no <p> wrappers, no <br>s).
             const compiledImages = /** @type {string} */ (marked.parse(innerContent.trim()));
             const figcaption = caption?.trim()
-                ? `<figcaption class="mt-2 text-sm text-gray-500">${escapeHtml(caption.trim())}</figcaption>`
+                ? `<figcaption class="${CAPTION_CLASSES}">${escapeHtml(caption.trim())}</figcaption>`
                 : '';
             // The <figure> provides the outer spacing (like single images), so the
             // grid items themselves get no vertical margin and the caption sits right below.
