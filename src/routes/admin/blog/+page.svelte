@@ -4,6 +4,18 @@
     import imageCompression from 'browser-image-compression';
 
     let isUploadingImages = $state(false);
+    let isInserting = $state(false);
+
+    /** @param {Event} */
+    async function handleInsertGridTemplate() {
+        isInserting = true;
+        let newMarkdown = '\n\n::: GRID\n';
+        newMarkdown += `![Image 1](uploadedUrl1)\n`;
+        newMarkdown += `![Image 2](uploadedUrl2)\n`;
+        newMarkdown += ':::\n';
+        markdownText += newMarkdown;
+        isInserting = false;
+    }
 
     /** @param {Event} e */
     async function handleImageUpload(e) {
@@ -254,7 +266,13 @@
                             <div class="text-xs uppercase font-bold text-gray-400 mb-3 tracking-wider flex justify-between items-center">
                                 <span>Markdown Editor</span>
                                 <div class="flex items-center space-x-3">
-                                    <span class="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-1 rounded">Pro-Tip: Wrap images in ::: grid</span>
+                                    <button 
+                                        class="cursor-pointer bg-blue-400 hover:bg-blue-600 text-black px-3 py-1 rounded flex items-center transition-colors shadow-sm"
+                                        onclick={handleInsertGridTemplate}
+                                    >
+                                        {isInserting  ? '⏳ Inserting...' : 'Image Grid Template'}
+                                        
+                                    </button>
                                     
                                     <label class="cursor-pointer bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center transition-colors shadow-sm">
                                         {isUploadingImages ? '⏳ Uploading...' : '🖼️ Add Image(s)'}
