@@ -1,15 +1,14 @@
 <script>
     import { enhance } from '$app/forms';
-    import { marked } from 'marked';
+    import { renderBlogMarkdown } from '$lib/markdown';
     import imageCompression from 'browser-image-compression';
 
     let isUploadingImages = $state(false);
     let isInserting = $state(false);
 
-    /** @param {Event} */
     async function handleInsertGridTemplate() {
         isInserting = true;
-        let newMarkdown = '\n\n::: GRID\n';
+        let newMarkdown = '\n\n::: GRID "Caption"\n';
         newMarkdown += `![Image 1](uploadedUrl1)\n`;
         newMarkdown += `![Image 2](uploadedUrl2)\n`;
         newMarkdown += ':::\n';
@@ -61,14 +60,14 @@
             
             // The "Cool Feature" Trigger
             if (uploadedUrls.length === 2) {
-                newMarkdown += '::: GRID\n';
+                newMarkdown += '::: GRID "Caption"\n';
                 newMarkdown += `![Image 1](${uploadedUrls[0]})\n`;
                 newMarkdown += `![Image 2](${uploadedUrls[1]})\n`;
                 newMarkdown += ':::\n';
             } else {
                 // Standard vertical stack for 1 image, or 3+ images
                 uploadedUrls.forEach((url, index) => {
-                    newMarkdown += `![Image ${index + 1}](${url})\n`;
+                    newMarkdown += `![Image ${index + 1}](${url} "Caption")\n`;
                 });
             }
 
@@ -104,32 +103,7 @@
     let markdownText = $state(''); 
     
     // Svelte 5 derived rune to instantly compile HTML as you type
-    let renderedHtml = $derived.by(() => {
-        if (!markdownText) return '';
-        
-        let customMarkdown = markdownText;
-        
-        // Custom Block Replacement for the side-by-side images!
-        // Replaces "::: GRID \n ... \n :::" with custom Tailwind grid divs
-        customMarkdown = customMarkdown.replace(
-            /:::\s*GRID\n([\s\S]*?)\n:::/g,
-            (match, innerContent) => {
-                // 1. Compile the Markdown into HTML *before* wrapping it in the div.
-                // Using parseInline prevents marked from wrapping the images in a <p> tag.
-                let compiledImages = /** @type {string} */ (marked.parseInline(innerContent.trim()));
-                
-                // 2. Strip out any stray <br> tags marked generated from your enter keys.
-                // (CSS Grids treat <br> tags as grid items, which ruins the side-by-side layout!)
-                
-                compiledImages = compiledImages.replace(/<br\s*\/?>/gi, '');
-
-                // 3. Wrap our perfectly clean images in the Tailwind grid.
-                return `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">\n${compiledImages}\n</div>`;
-            }
-        );
-
-        return marked.parse(customMarkdown, { breaks: true });
-    });
+    let renderedHtml = $derived(markdownText ? renderBlogMarkdown(markdownText) : '');
 
     $effect(() => {
         if (data.user?.name && !author && !editingPostId) {
@@ -292,7 +266,7 @@
                             </div>
                             <textarea 
                                 bind:value={markdownText}
-                                placeholder="# Write your heading here..." 
+                                placeholder={'# Write your heading here...\n\nImages with caption:\n![Alt text](image-url "Your caption")\n\nImage grid with caption:\n::: GRID "Your caption"\n![Image 1](url1)\n![Image 2](url2)\n:::'}
                                 class="w-full flex-1 bg-transparent text-gray-200 font-mono text-sm border-none p-0 focus:ring-0 resize-none h-full outline-none"
                             ></textarea>
                         </div>
